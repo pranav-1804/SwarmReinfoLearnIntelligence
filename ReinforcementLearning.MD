@@ -180,6 +180,9 @@ Steps:
 
 1. `worldToGrid` the vehicle and the target → `(vx,vy)`, `(tx,ty)`.
 2. Read the cached previous cell `prevVehicleCell[id]` → `(pvx,pvy)`.
+   **Same-cell guard:** if `(pvx,pvy) == (vx,vy)` return immediately — a cell is
+   ~25–30 ticks wide, and learning from self-transitions wrote spurious
+   "not closer" penalties to a defaulted action (RIGHT) every tick.
 3. Build the **shaped reward**: `STEP_PENALTY(−0.02)` + (`+0.2` if closer else `−0.1`),
    then add the **black-hole penalty** (up to `−5 · depth` inside `2.0×` the radius)
    and the **obstacle penalty** (up to `−2 · depth` inside the sensing buffer).
@@ -267,14 +270,19 @@ if (rand.nextDouble() < epsilon) {
     magnitude = EXPLORE_MAGNITUDE;                      // 0.5 — a gentle nudge, not a full slam
 } else {
     action    = getBestAction(vx, vy, tx, ty);         // EXPLOIT: best learned action
-    magnitude = clamp(getMaxQ(vx,vy,tx,ty) / REWARD_CAPTURE, 0, 1);   // confidence
+    magnitude = clamp( (getMaxQ(…) − getMinQ(…)) / CONFIDENCE_GAP_SCALE, 0, 1);  // advantage-gap confidence
 }
 bias = directionOf(action) · magnitude;                // a 2-D vector
 ```
 
-- **Exploit** scales by **confidence** = `maxQ / 10`: an unlearned cell (`maxQ ≈ 0`)
-  contributes ≈ 0 and lets the boids lead; a well-learned cell pushes near full
-  strength.
+- **Exploit** scales by **confidence** = the **advantage gap** `(maxQ − minQ) / 1.0`:
+  how decisively the best action beats the worst. (Previously this was raw
+  `maxQ / 10`, which clamps to **zero** whenever `maxQ ≤ 0` — and since step costs
+  and hazard penalties make most visited states net-negative, the exploit branch
+  was effectively silent almost everywhere.) The gap stays informative when all
+  values are negative ("least bad" is still a direction), an unlearned cell
+  (all zeros, gap 0) still contributes nothing and lets the boids lead, and a
+  4-way tie no longer actuates `getBestAction`'s default-to-UP bias.
 - **Explore** uses a fixed gentle magnitude (`EXPLORE_MAGNITUDE = 0.5`) so `epsilon`
   does real work without overwhelming the flocking — `EPSILON_START` is kept at `0.10`
   for the same reason (full-strength exploration on 30% of ticks made the swarm jittery).
@@ -385,6 +393,8 @@ policy is learned in a handful of episodes. (Not yet applied — see §8.)
 | `recordTargetCapture` / `SwarmQLearning` | Split off **`endEpisode`** so capture-time stats and ε decay run **once per episode**, not once per vehicle | The bookkeeping ran 30× per capture, decaying ε ~30× too fast (floor in ~12 captures instead of ~357) and inflating the episode count 30×. |
 | `recordTargetCapture` | Made the synthetic path **hazard-aware** via `chooseSafeStep` / `isHazardCell` / `gridCellToWorld` | The old straight-line path could reward driving through a black hole — contradicting what `stepUpdate` penalises. The two channels now agree. |
 | `getQLearningBias` | Wired in **ε-greedy** (explore at full magnitude with prob ε, else exploit scaled by confidence) | `epsilon` was decayed but never consulted — the exploration was dead code. Now it actually affects behaviour. |
+| `stepUpdate` | Added a **same-cell guard**: return early when the vehicle's grid cell has not changed since the last tick | A cell is ~25–30 ticks wide at `max_vel`, so most ticks were self-transitions. Each one wrote a spurious update: shaping read "not closer" (`−0.1`) and `inferAction(0,0)` defaulted to RIGHT, so action 3 absorbed ~25 bogus penalties per real cell crossing in every visited state — corrupting the table and drowning real transitions ~25:1. Now exactly one TD update is written per actual cell transition. |
+| `getQLearningBias` | Replaced raw-`maxQ` confidence with the **advantage gap** `(maxQ − minQ) / CONFIDENCE_GAP_SCALE`; added `getMinQ` | `maxQ / REWARD_CAPTURE` clamps to 0 whenever `maxQ ≤ 0`, and step costs / hazard penalties make most visited states net-negative — so the exploit branch output a zero vector almost everywhere and the learned policy never actuated. The gap preserves direction information in all-negative states, is 0 for untrained states (boids still lead), and neutralises the UP tie-break bias. |
 
 **Files touched:** `SwarmQLearning.java`, `Simulation.java`.
 
@@ -419,6 +429,7 @@ policy is learned in a handful of episodes. (Not yet applied — see §8.)
 | `GAMMA` | 0.9 | discount factor |
 | `EPSILON_START / FLOOR / DECAY` | 0.10 / 0.02 / 0.995 | exploration schedule (per episode) |
 | `EXPLORE_MAGNITUDE` | 0.5 | strength of an exploratory nudge (gentle) |
+| `CONFIDENCE_GAP_SCALE` | 1.0 | advantage gap (`maxQ − minQ`) that yields full exploit strength |
 | `REWARD_CAPTURE` | +10 | reach the target |
 | `REWARD_CLOSER / FURTHER` | +0.2 / −0.1 | per-tick shaping |
 | `REWARD_STEP_PENALTY` | −0.02 | per-tick cost |

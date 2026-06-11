@@ -48,6 +48,17 @@ public class SwarmQLearning {
     private static final double EPSILON_FLOOR = 0.02;  // minimum exploration
     private static final double EPSILON_DECAY = 0.995; // per-episode multiplier
     private static final double EXPLORE_MAGNITUDE = 0.5; // strength of an exploratory nudge (0..1), gentle on purpose
+    /**
+     * Scale for the exploit-confidence ADVANTAGE GAP (maxQ - minQ): a state where the
+     * best action beats the worst by this much steers at full strength. Previously
+     * confidence was raw {@code maxQ / REWARD_CAPTURE}, which clamps to ZERO whenever
+     * maxQ <= 0 — and step costs / hazard penalties make maxQ negative in most visited
+     * states, so the exploit branch was silent almost everywhere. The gap stays
+     * informative even when every value is negative ("LEFT is least bad" is still a
+     * direction), and is exactly 0 in untrained states (all zeros) so unlearned cells
+     * still leave the flocking forces in charge.
+     */
+    private static final double CONFIDENCE_GAP_SCALE = 1.0;
 
     // ── Rewards ───────────────────────────────────────────────────────────────
     private static final double REWARD_CAPTURE     =  10.0;
@@ -123,6 +134,13 @@ public class SwarmQLearning {
         return max;
     }
 
+    /** Returns the lowest Q-value over the four actions of a state — used for the advantage-gap confidence. */
+    private double getMinQ(int vx, int vy, int tx, int ty) {
+        double min = Q[vx][vy][tx][ty][0];
+        for (int a = 1; a < ACTIONS; a++) min = Math.min(min, Q[vx][vy][tx][ty][a]);
+        return min;
+    }
+
     /**
      * The single Q-table writer: applies one temporal-difference (Bellman) update for
      * a transition from cell {@code (vx,vy)} to {@code (nvx,nvy)} with the target at
@@ -179,6 +197,14 @@ public class SwarmQLearning {
 
         int[] prev = prevVehicleCell[vehicleId];
         int   pvx  = prev[0], pvy = prev[1];
+
+        // SAME-CELL GUARD: a grid cell is ~25-30 ticks wide at max_vel, so most ticks
+        // end in the cell they started in. Without this guard every such tick wrote a
+        // spurious update: the distance shaping read "not closer" (−0.1), and
+        // inferAction(0,0) defaulted to RIGHT — so action 3 absorbed ~25 bogus
+        // penalties per real cell crossing, in every visited state, drowning the
+        // genuine transition signal ~25:1. Learn only when the cell actually changes.
+        if (pvx == vx && pvy == vy) return;
 
         // Distance reward: positive if moved closer to target grid cell
         double prevDist = Math.sqrt(Math.pow(pvx - tx, 2) + Math.pow(pvy - ty, 2));
@@ -323,9 +349,11 @@ public class SwarmQLearning {
      * previously the method always exploited and epsilon was never consulted.
      *
      * MAGNITUDE:
-     *  - Exploit: the bias is scaled by a confidence term {@code maxQ/REWARD_CAPTURE}
-     *    in [0,1], so the table only steers as strongly as it trusts the cell — an
-     *    unlearned cell contributes nothing and lets the flocking forces lead.
+     *  - Exploit: the bias is scaled by a confidence term in [0,1] — the ADVANTAGE GAP
+     *    {@code (maxQ - minQ) / CONFIDENCE_GAP_SCALE} — so the table only steers as
+     *    strongly as it can discriminate between actions. An unlearned cell (all zeros,
+     *    gap 0) contributes nothing and lets the flocking forces lead, while a state
+     *    whose values are all negative can still steer ("least bad" is a direction).
      *  - Explore: the random nudge is applied at full magnitude (confidence is
      *    bypassed), so exploration can actuate even in cells the table has not
      *    learned yet. It remains safe because {@code move()} caps the whole bias at
@@ -346,10 +374,17 @@ public class SwarmQLearning {
             action    = rand.nextInt(ACTIONS);
             magnitude = EXPLORE_MAGNITUDE;
         } else {
-            // EXPLOIT: best known action, scaled by how much we trust this cell
+            // EXPLOIT: best known action, scaled by how decisively it beats the
+            // alternatives (advantage gap), NOT by raw maxQ. Raw maxQ is <= 0 in most
+            // visited states (step costs and hazard penalties), which clamped the old
+            // confidence (maxQ / REWARD_CAPTURE) to zero and silenced this branch
+            // almost everywhere. The gap keeps the preference usable even when all
+            // values are negative. A welcome side effect: a 4-way tie (e.g. a fresh
+            // all-zero state, where getBestAction defaults to UP) now yields gap = 0
+            // → magnitude 0, removing the systematic "up" bias in untrained cells.
             action    = getBestAction(vx, vy, tx, ty);
-            double maxQ = getMaxQ(vx, vy, tx, ty);
-            magnitude = Math.max(0.0, Math.min(1.0, maxQ / REWARD_CAPTURE));
+            double gap = getMaxQ(vx, vy, tx, ty) - getMinQ(vx, vy, tx, ty);
+            magnitude = Math.max(0.0, Math.min(1.0, gap / CONFIDENCE_GAP_SCALE));
         }
 
         double[] bias = new double[2];
