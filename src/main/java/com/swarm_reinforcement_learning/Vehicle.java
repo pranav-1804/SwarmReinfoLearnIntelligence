@@ -280,7 +280,7 @@ public class Vehicle {
 		double[] acc_sep      = separation(allVehicles);
 		double[] acc_align    = alignment(allVehicles);
 		double[] acc_obs      = obstacleAvoidance(obstacles);
-		double[] acc_bh       = blackHoleAvoidance(blackHoles);
+		double[] acc_bh       = new double[]{0, 0};
 		double[] acc_seek     = seekTarget(target);
 
 		// 3. Combine all forces into a single X and Y sum

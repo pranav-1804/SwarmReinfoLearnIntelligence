@@ -26,12 +26,6 @@ public class BlackHole {
     }
 
     // constructor with only position of the blackhole and default radius
-    BlackHole(double[] position) {
-        this.position = position;
-        this.hole_radius = 40;
-        this.hole_name = "Schwarzes Loch";
-    }
-
     public String getHole_name() {
         return hole_name;
     }

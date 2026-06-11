@@ -118,7 +118,7 @@ public class Simulation extends JFrame {
                 // Per-step Q-update: vehicle observes state, gets shaped reward
                 // Black holes are passed so the Q-table learns to penalise entering them
                 if (!isConsuming && !isDispersing && currentTarget != null) {
-                    qLearning.stepUpdate(v.id, v.pos, currentTarget, allBlackHoles, allObstacles);
+                    qLearning.stepUpdate(v, v.pos, currentTarget, allBlackHoles, allObstacles, this);
                 }
                 double[] qBias = qLearning.getQLearningBias(v.pos, currentTarget);
                 v.move(allVehicles, allObstacles, allBlackHoles, currentTarget, isConsuming, isDispersing, qBias);
@@ -321,7 +321,7 @@ public class Simulation extends JFrame {
      * random heading. Called at start-up and after every capture so each episode
      * begins as a coherent cluster.
      */
-    private void placeVehicleInSpawnCircle(Vehicle car) {
+    public void placeVehicleInSpawnCircle(Vehicle car) {
         final double spawnRadius = SPAWN_POINT_RADIUS;
         final double spawnCenterX = (WIDTH * pix) - WORLD_MARGIN - spawnRadius;
         final double spawnCenterY = WORLD_MARGIN + spawnRadius;

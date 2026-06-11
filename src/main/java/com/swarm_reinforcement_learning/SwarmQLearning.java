@@ -180,22 +180,24 @@ public class SwarmQLearning {
      * Performs a TD update using the vehicle's movement since the last tick.
      * Applies a heavy penalty if the vehicle is inside a black hole's danger zone.
      *
-     * @param vehicleId    Vehicle.id (1-based)
+     * @param vehicle    Vehicle (1-based)
      * @param vehiclePos   current world position of the vehicle
      * @param targetPos    current world position of the target
      * @param blackHoles   list of black holes in the world
      * @param allObstacles list of all obstacles in the world
      */
-    public void stepUpdate(int vehicleId, double[] vehiclePos, double[] targetPos,
-                           List<BlackHole> blackHoles, ArrayList<Obstacle> allObstacles) {
+    public void stepUpdate(Vehicle vehicle, double[] vehiclePos, double[] targetPos,
+                           List<BlackHole> blackHoles, ArrayList<Obstacle> allObstacles, Simulation simulation) {
         if (targetPos == null) return;
+
+        boolean blackHoleHit = false;
 
         int[] vc  = worldToGrid(vehiclePos);
         int[] tc  = worldToGrid(targetPos);
         int   vx  = vc[0], vy = vc[1];
         int   tx  = tc[0], ty = tc[1];
 
-        int[] prev = prevVehicleCell[vehicleId];
+        int[] prev = prevVehicleCell[vehicle.id];
         int   pvx  = prev[0], pvy = prev[1];
 
         // SAME-CELL GUARD: a grid cell is ~25-30 ticks wide at max_vel, so most ticks
@@ -219,7 +221,8 @@ public class SwarmQLearning {
                 double dx   = vehiclePos[0] - bh.position[0];
                 double dy   = vehiclePos[1] - bh.position[1];
                 double dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < bh.getHole_radius() * 2.0) {
+                if (dist <= bh.getHole_radius()) {
+                    blackHoleHit = true;
                     // Scale penalty by how deep inside the danger zone the vehicle is
                     double depth = 1.0 - (dist / (bh.getHole_radius() * 2.0));
                     reward += PENALTY * depth;
@@ -250,6 +253,11 @@ public class SwarmQLearning {
 
         // TD update: previous cell → current cell
         updateQ(pvx, pvy, tx, ty, action, reward, vx, vy);
+
+        if(blackHoleHit){
+            System.out.println("Vehicle " + vehicle.id + " hit a black hole at (" + vehiclePos[0] + ", " + vehiclePos[1] + ") with reward " + reward);
+            simulation.placeVehicleInSpawnCircle(vehicle);
+        }
 
         // Store current cell for next tick
         prev[0] = vx;
