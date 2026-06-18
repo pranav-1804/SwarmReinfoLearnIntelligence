@@ -35,7 +35,7 @@ public class Simulation extends JFrame {
 
     static final double SPAWN_POINT_RADIUS = 40.0;
 
-    int anzFz = 100; // number of cars (Anzahl Fahrzeuge)
+    int anzFz = 200; // number of cars (Anzahl Fahrzeuge)
     boolean isConsuming = false; // state when the vehicles are consuming the target
     boolean isDispersing = false; // state when the vehicles are done consuming the target
     long consumptionStartTime = 0; // timer after when the vehicles start consume the target
