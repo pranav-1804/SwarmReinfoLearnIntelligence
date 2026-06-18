@@ -270,7 +270,7 @@ public class Vehicle {
 		// 1. Define all weights
 		double f_zus = F_ZUS_WEIGHT;
 		double f_sep = isConsuming ? 0.0 : F_SEP_WEIGHT;
-		double f_obs = isConsuming ? Math.max(OBS_WEIGHT, 1.2) : OBS_WEIGHT;
+		double f_obs = isConsuming ? Math.max(OBS_WEIGHT, 2) : OBS_WEIGHT;
 		double f_bh  = 2.0; // black hole avoidance — always high priority, cannot be consumed
 		double f_aus = isConsuming ? 0.0 : F_AUS_WEIGHT;
 		double f_target = isConsuming ? 1.2 : 0.00;
@@ -280,7 +280,7 @@ public class Vehicle {
 		double[] acc_sep      = separation(allVehicles);
 		double[] acc_align    = alignment(allVehicles);
 		double[] acc_obs      = obstacleAvoidance(obstacles);
-		double[] acc_bh       = new double[]{0, 0};
+		double[] acc_bh       = isConsuming?blackHoleAvoidance(blackHoles):new double[]{0,0};
 		double[] acc_seek     = seekTarget(target);
 
 		// 3. Combine all forces into a single X and Y sum

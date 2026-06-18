@@ -1,6 +1,6 @@
 5
 35 200 15 Loch-A
-440 295 15 Loch-B
+440 155 15 Loch-B
 185 40 15 Loch-C
 555 190 15 Loch-D
 295 245 15 Loch-E
