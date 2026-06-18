@@ -30,11 +30,12 @@ import java.awt.BorderLayout;
  * machine), then for every vehicle: {@code stepUpdate} (learn) → {@code getQLearningBias}
  * (act) → {@code move} (blend), and finally repaints.</p>
  */
+
 public class Simulation extends JFrame {
 
     static final double SPAWN_POINT_RADIUS = 40.0;
 
-    int anzFz = 30; // number of cars (Anzahl Fahrzeuge)
+    int anzFz = 100; // number of cars (Anzahl Fahrzeuge)
     boolean isConsuming = false; // state when the vehicles are consuming the target
     boolean isDispersing = false; // state when the vehicles are done consuming the target
     long consumptionStartTime = 0; // timer after when the vehicles start consume the target
@@ -49,7 +50,7 @@ public class Simulation extends JFrame {
     static final int HEIGHT = 800;
     final int WORLD_MARGIN = 10;
     final int WORLD_BORDER_WIDTH = 2;
-    static int sleep = 8; // delay in frame
+    static int sleep = 1; // delay in frame
     static double pix = 0.4; // the scaling factor
     double[] currentTarget = null;
 

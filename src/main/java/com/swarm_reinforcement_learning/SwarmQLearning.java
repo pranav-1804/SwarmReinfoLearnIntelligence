@@ -75,6 +75,13 @@ public class SwarmQLearning {
      * vx,vy = vehicle grid cell   tx,ty = target grid cell
      */
     private final double[][][][][] Q;
+    /**
+     * Persistent per-cell value shown by the grid overlay: a running average of the
+     * reward seen in each cell. It has NO target dimension and is never reset, so the
+     * overlay accumulates across episodes instead of snapping back to 0 every time the
+     * target moves to a new slice. Display only — it does not affect steering.
+     */
+    private final double[][] cellValue;
     private final Random rand;
     private final double worldWidth;
     private final double worldHeight;
@@ -96,6 +103,7 @@ public class SwarmQLearning {
         this.worldWidth  = worldWidth;
         this.worldHeight = worldHeight;
         this.Q = new double[GRID_W][GRID_H][GRID_W][GRID_H][ACTIONS];
+        this.cellValue = new double[GRID_W][GRID_H]; // persistent, never reset
         this.rand = new Random();
         this.prevVehicleCell = new int[numVehicles + 1][2]; // +1: ids are 1-based
     }
@@ -253,6 +261,11 @@ public class SwarmQLearning {
 
         // TD update: previous cell → current cell
         updateQ(pvx, pvy, tx, ty, action, reward, vx, vy);
+
+        // Persistent per-cell value for the grid overlay (target-independent, never
+        // reset) — a running average of the reward seen in this cell, so the displayed
+        // numbers accumulate across episodes instead of resetting when the target moves.
+        cellValue[pvx][pvy] += ALPHA * (reward - cellValue[pvx][pvy]);
 
         if(blackHoleHit){
             System.out.println("Vehicle " + vehicle.id + " hit a black hole at (" + vehiclePos[0] + ", " + vehiclePos[1] + ") with reward " + reward);
@@ -440,15 +453,15 @@ public class SwarmQLearning {
     public int getGridH() { return GRID_H; }
 
     /**
-     * Best (maximum) Q-value stored for vehicle cell {@code (gx,gy)} given the current
-     * target — i.e. the number the grid overlay prints in that cell. Returns 0 when
-     * there is no target, the cell is out of range, or it has not been learned yet.
+     * The number the grid overlay prints in cell {@code (gx,gy)}: the persistent
+     * {@link #cellValue} (a running average of the reward seen there). Because this is
+     * target-independent and never reset, the overlay accumulates across episodes
+     * instead of going back to 0 when the target moves to a new slice. {@code targetPos}
+     * is accepted for call-site compatibility but no longer needed for the value.
      */
     public double getBestValueForCell(int gx, int gy, double[] targetPos) {
-        if (targetPos == null) return 0.0;
         if (gx < 0 || gx >= GRID_W || gy < 0 || gy >= GRID_H) return 0.0;
-        int[] tc = worldToGrid(targetPos);
-        return getMaxQ(gx, gy, tc[0], tc[1]);
+        return cellValue[gx][gy];
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
