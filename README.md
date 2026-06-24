@@ -2,7 +2,11 @@
 
 An autonomous multi-agent navigation system built using Java Swing that demonstrates a hybrid control architecture. The framework combines localized biological swarm intelligence (Craig Reynolds' Boids paradigm) with global macro-spatial path optimization through an off-policy Tabular Q-Learning engine. The agents successfully optimize forage paths toward dynamic targets while safely bypassing static rectangular obstacles and hazardous gravitational black holes.
 
-![SwarmSimulation v2.1](v2_0.png)
+
+
+https://github.com/user-attachments/assets/e1b76e49-0548-4200-a104-f7abad7311ce
+
+
 
 ## 🚀 Key Features
 
@@ -34,14 +38,19 @@ An autonomous navigation layer driven by an off-policy tabular Q-Learning system
 ---
 
 
-## Project Structure
+## 🛠️ Project Structure
 
-- `src/main/java/com/dgx/Simulation.java`: application entry point, simulation loop, target spawning, and UI controls.
-- `src/main/java/com/dgx/Canvas.java`: renders vehicles, obstacles, targets, overlays, and debug visualizations.
-- `src/main/java/com/dgx/Vehicle.java`: vehicle movement, steering, obstacle avoidance, and swarm logic.
-- `src/main/java/com/dgx/Obstacle.java`: rectangular obstacle model.
-- `src/main/java/com/dgx/BlackHole.java`: circular black hole model.
-- `src/main/java/com/dgx/VectorCalculation.java`: helper methods for 2D vector math.
+The project code is organized under the `com.swarm_reinforcement_learning` package layout:
+
+src/main/java/com/swarm_reinforcement_learning/
+│
+├── Simulation.java        # Application orchestrator, 8ms engine render loop, config map parser
+├── Canvas.java            # Render core (vehicles, shapes, grids, Q-value heatmaps, overlays)
+├── Vehicle.java           # Kinematic state actor (combines flocking forces and RL bias vectors)
+├── SwarmQLearning.java    # Central 5D Q-tensor repository, Bellman equation updates, action selections
+├── Obstacle.java          # Model definitions for rigid rectangular barriers
+├── BlackHole.java         # Model definitions for circular gravitational threat zones
+└── VectorCalculation.java # Stateless low-level geometry engine (2D vector truncate, length, normalize)
 
 ---
 
@@ -62,6 +71,9 @@ The simulation window provides a compact 2-row $\times$ 5-column live dashboard 
 * **F_sep (Separation):** Adjusts the distance threshold vehicles maintain to prevent clustering.
 * **F_aus (Alignment):** Varies how tightly vehicles match their neighbor's flight vectors.
 * **Toggle Q-Grid:** Toggles an on-screen grid heatmap showing learned numerical Q-values.
+
+<img width="734" height="74" alt="Screenshot 2026-06-24 at 1 16 18 PM" src="https://github.com/user-attachments/assets/ae45d73d-8221-4644-bc37-c3d192042902" />
+
 
 ---
 
@@ -116,7 +128,9 @@ This ensures the swarm retains its organic local cohesion while strictly adherin
 - Targets are spawned within the active arena and rejected if they overlap an obstacle or fall too close to a black hole.
 - The controls are arranged in two rows of five tiles to keep the panel compact.
 
-- 🎓 Institution
+
+
+🎓 Institution
 Hochschule für Technik Stuttgart (HFT Stuttgart) University of Applied Sciences Course: Software Technology Project Management
 
 Term: Summer Semester 2026
