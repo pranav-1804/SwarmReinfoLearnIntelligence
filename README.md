@@ -104,23 +104,27 @@ This ensures the swarm retains its organic local cohesion while strictly adherin
 
 ---
 
-## 🚀 Building and Running the System
+## 📦 Building and Running the System
 
-1. Clone the project repository to your local machine:
-   ```bash
-   git clone [https://github.com/pranav-1804/SwarmReinfoLearnIntelligence.git](https://github.com/pranav-1804/SwarmReinfoLearnIntelligence.git)
-   cd SwarmReinfoLearnIntelligence
+Follow these steps to clone, compile, and execute the simulation on your local machine:
 
+## 1. Clone the Repository
+Clone the project repository and navigate into the root directory:
+```bash
+git clone [https://github.com/pranav-1804/SwarmReinfoLearnIntelligence.git](https://github.com/pranav-1804/SwarmReinfoLearnIntelligence.git)
+cd SwarmReinfoLearnIntelligence
+```
+## 2. Build the Project
+Compile the source classes and package the application artifact using Maven:
+```bash
+mvn clean package
+```
 
-1. Compile the source classes and package the application artifact via Maven:
-
-  Bash
-  mvn clean package
-
-2. Execute the simulation application using the correct package path:
-
-  Bash
-  java -cp target/classes com.swarm_reinforcement_learning.Simulation
+## 3. Execute the Simulation
+Run the compiled simulation class directly from the target build path:
+```bash
+java -cp target/classes com.swarm_reinforcement_learning.Simulation
+```
 
 ## Notes
 
@@ -130,7 +134,7 @@ This ensures the swarm retains its organic local cohesion while strictly adherin
 
 
 
-🎓 Institution
+## 🎓 Institution
 Hochschule für Technik Stuttgart (HFT Stuttgart) University of Applied Sciences Course: Software Technology Project Management
 
 Term: Summer Semester 2026
