@@ -3,8 +3,7 @@
 An autonomous multi-agent navigation system built using Java Swing that demonstrates a hybrid control architecture. The framework combines localized biological swarm intelligence (Craig Reynolds' Boids paradigm) with global macro-spatial path optimization through an off-policy Tabular Q-Learning engine. The agents successfully optimize forage paths toward dynamic targets while safely bypassing static rectangular obstacles and hazardous gravitational black holes.
 
 
-
-https://github.com/user-attachments/assets/e1b76e49-0548-4200-a104-f7abad7311ce
+https://github.com/user-attachments/assets/9df0d042-e979-4c63-85ab-25d3f3c3b357
 
 
 
