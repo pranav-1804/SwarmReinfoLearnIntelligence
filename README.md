@@ -91,7 +91,7 @@ Where:
 ### 2. Force Vector Assembly
 The vehicle's position is not directly overridden by the reinforcement learning engine. Instead, total vehicle acceleration represents a linear blend of biological, physical, and neural force components:
 
-$$A_{\text{Total}} = F_{\text{Boids}} + F_{\text{Avoidance}} + F_{\text{RL\_Bias}}$$
+$$A_{\text{Total}} = F_{\text{Boids}} + F_{\text{Avoidance}} + F_{\text{RL-Bias}}$$
 
 This ensures the swarm retains its organic local cohesion while strictly adhering to global path planning instructions. All computed interaction vectors are continuously normalized and truncated inside `VectorCalculation.java` to respect physical speed ceilings.
 
